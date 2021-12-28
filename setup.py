@@ -10,12 +10,21 @@ extras_require = {
     # ]
 }
 
+
+with open('README.md') as f:
+    long_description = f.read()
+
+
 setup(
     name='aliddns2',
-    version='0.1.0',
+    version='0.1.1',
     license='GPL',
     description='Aliyun DDNS client',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    homepage='https://github.com/kalixi/AliDDNS',
     author='rfancn',
+    maintainer='catroll',
     requires=install_requires,
     extras_require=extras_require,
     packages=['aliddns2'],
