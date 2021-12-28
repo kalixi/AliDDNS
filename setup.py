@@ -22,7 +22,7 @@ setup(
     description='Aliyun DDNS client',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    homepage='https://github.com/kalixi/AliDDNS',
+    url='https://github.com/kalixi/AliDDNS',
     author='rfancn',
     maintainer='catroll',
     requires=install_requires,
