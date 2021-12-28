@@ -7,4 +7,3 @@ After=network.target network-online.target
 Type=simple
 WorkingDirectory=/root/tools/aliyun-ddns-client
 ExecStart=/usr/bin/python ddns.py
-
