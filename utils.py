@@ -33,7 +33,7 @@ class DDNSUtils(object):
     # We need generate a non-exist subdomain name
     # Here we generate a random UUID for that
     #fake_subdomain = ''.join([random.choice(string.lowercase) for i in xrange(12)])
-    RANDOM_UUID = uuid.uuid4().hex 
+    RANDOM_UUID = uuid.uuid4().hex
 
     """
     Utils class wrapper
@@ -77,7 +77,7 @@ class DDNSUtils(object):
             return None
 
         if ret.status_code != requests.codes.ok:
-            cls.err("Failed to get current public IP: {0}\n{1}" \
+            cls.err("Failed to get current public IP: {0}\n{1}"
                     .format(ret.status_code, ret.content))
             return None
 
@@ -113,18 +113,19 @@ class DDNSUtils(object):
         :return:  IP address or None
         """
         ip_addr = None
-        try:
-            if subdomain == "@":
-                hostname = domainname 
-            elif subdomain == "*":
-                hostname = "{0}.{1}".format(cls.RANDOM_UUID, domainname)
-            else:
-                hostname = "{0}.{1}".format(subdomain, domainname)
 
+        if subdomain == "@":
+            hostname = domainname
+        elif subdomain == "*":
+            hostname = "{0}.{1}".format(cls.RANDOM_UUID, domainname)
+        else:
+            hostname = "{0}.{1}".format(subdomain, domainname)
+
+        try:
             ip_addr = socket.gethostbyname(hostname)
         except socket_error as ex:
-            cls.err("DomainRecord[{0}] cannot be resolved because of:{1}" \
-                     .format(hostname, ex))
+            cls.err("DomainRecord[{0}] cannot be resolved because of:{1}"
+                    .format(hostname, ex))
 
         return ip_addr
 
