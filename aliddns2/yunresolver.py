@@ -21,8 +21,6 @@
 
 import sys
 
-from aliddns import record
-
 if sys.version_info < (3,):
     from urllib import quote_plus, urlencode
 else:

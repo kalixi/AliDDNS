@@ -22,9 +22,9 @@
 import logging
 import time
 
-from aliddns.config import DDNSConfig
-from aliddns.record import DDNSDomainRecordManager
-from aliddns.utils import DDNSUtils
+from aliddns2.config import DDNSConfig
+from aliddns2.record import DDNSDomainRecordManager
+from aliddns2.utils import DDNSUtils
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s [%(name)s:%(funcName)s#%(lineno)s] %(message)s')
 LOG = logging.getLogger(__name__)

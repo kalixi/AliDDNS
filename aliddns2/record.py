@@ -32,7 +32,7 @@ else:
 
 import logging
 
-from aliddns.yunresolver import YunResolver
+from aliddns2.yunresolver import YunResolver
 
 LOG = logging.getLogger(__name__)
 

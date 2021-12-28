@@ -11,14 +11,14 @@ extras_require = {
 }
 
 setup(
-    name='aliddns',
+    name='aliddns2',
     version='0.1.0',
     license='GPL',
     description='Aliyun DDNS client',
     author='rfancn',
     requires=install_requires,
     extras_require=extras_require,
-    packages=['aliddns'],
+    packages=['aliddns2'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
