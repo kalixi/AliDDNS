@@ -1,6 +1,8 @@
-# aliyun-ddns-client(v0.3)
+# AliDDNS
 
-阿里云 Python DDNS 客户端 (<http://www.hdget.com/aliyun-ddns-client>)
+阿里云 Python DDNS 客户端 (<https://github.com/kalixi/AliDDNS>)
+
+PS: Fork from <https://github.com/rfancn/aliyun-ddns-client>.
 
 中文 | [English](README.md)
 
@@ -17,35 +19,34 @@
 
 ## 先决条件
 
-下面是 aliyun-ddns-client 需要的一些第三方 python 库，你可以通过 pip 或 easy_install 安装:
+下面是 AliDDNS 需要的一些第三方 python 库，你可以通过 pip 或 easy_install 安装:
 
 - requests
-- netifaces (仅当你想从接口设置中获取IP地址时需要，当你有多个接口时可能会有用)
+- netifaces
 
 例如:
 
 ```sh
-pip install requests
-pip install netifaces # 可选
+pip install requests netifaces
 ```
 
 ## 安装
 
 ### 1. 使用 cron
 
-1. 下载所有文件到某个地方, 例如: `/opt/aliyun-ddns-client`
+1. 下载所有文件到某个地方, 例如: `/opt/aliddns`
 2. 将 `ddns.conf.example` 重命名为 `ddns.conf`
 3. 创建一个 cron 任务，定时执行 `python ddns.py`, 例如:
 
     ```sh
-    */5 * * * * cd /opt/aliyun-ddns-client && /usr/bin/python ddns.py
+    */5 * * * * cd /opt/aliddns && /usr/bin/python ddns.py
     ```
 
 4. 确保 cron 用户可以访问 `ddns.conf`
 
 ### 2. 使用 SystemD
 
-1. 下载所有文件到某个地方, 例如: `/root/tools/aliyun-ddns-client`
+1. 下载所有文件到某个地方, 例如: `/root/tools/aliddns`
 2. 将 `ddns.conf.example` 重命名为 `ddns.conf`
 3. 复制 `ddns.timer` 和 `ddns.service` 到 `/usr/lib/systemd/system`
 4. 执行:
@@ -68,7 +69,6 @@ pip install netifaces # 可选
 可选的选项:
 
 - type
-- debug
 
 ```ini
 [DEFAULT]
@@ -78,8 +78,6 @@ access_id =
 access_key =
 # it is not used at this moment, you can just ignore it
 interval = 600
-# turn on debug mode or not
-debug = true
 
 [DomainRecord1]
 # domain name, like google.com

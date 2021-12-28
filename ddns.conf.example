@@ -5,8 +5,6 @@ access_id =
 access_key =
 # Optional: not used now
 interval = 600
-# Optional: turn on debug mode or not
-debug = true
 
 [DomainRecord1]
 # Required: domain name, like google.com

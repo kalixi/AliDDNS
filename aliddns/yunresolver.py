@@ -19,9 +19,9 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 """
 
-from __future__ import print_function
-
 import sys
+
+from aliddns import record
 
 if sys.version_info < (3,):
     from urllib import quote_plus, urlencode
@@ -30,10 +30,13 @@ else:
 
 import hashlib
 import hmac
+import logging
 import uuid
 from datetime import datetime
 
 import requests
+
+LOG = logging.getLogger(__name__)
 
 
 class YunResolver(object):
@@ -41,11 +44,10 @@ class YunResolver(object):
     Implementation of Aliyun Resolver API
     """
 
-    def __init__(self, access_id, access_key, debug):
-        self.url = "https://dns.aliyuncs.com/"
+    def __init__(self, access_id, access_key):
+        self.url = 'https://dns.aliyuncs.com/'
         self.access_id = access_id
         self.hash_key = access_key + '&'
-        self.debug = debug
 
     def get_common_params(self):
         """
@@ -65,7 +67,7 @@ class YunResolver(object):
             'Timestamp': current_timestamp,
             'SignatureMethod': 'HMAC-SHA1',
             'SignatureNonce': signature_nonce,
-            'SignatureVersion': "1.0",
+            'SignatureVersion': '1.0',
         }
 
         return common_params
@@ -96,7 +98,7 @@ class YunResolver(object):
         params.update(self.get_common_params())
         sorted_params = sorted(params.items())
         canon_str = urlencode(sorted_params)
-        sign_str = http_method + "&" + quote_plus("/") + "&" + quote_plus(canon_str)
+        sign_str = http_method + '&' + quote_plus('/') + '&' + quote_plus(canon_str)
 
         # hmac sha1 algrithm
         signature = sha1_hmac(self.hash_key, sign_str)
@@ -104,14 +106,17 @@ class YunResolver(object):
         return signature
 
     def describe_domain_records(self, domain_name, page_number=None, page_size=None,
-                                rr_keyword="", type_keyword="", value_keyword=""):
+                                rr_keyword='', type_keyword='', value_keyword=''):
         """
         query:  DomainName(*), PageNumber, PageSize, RRKeyWord, TypeKeyWord, ValueKeyWord
         return: TotalCount, PageNumber, PageSize, DomainRecords
         """
-        http_method = "GET"
+        LOG.debug('describe_domain_records: %s, page_number: %s, page_size: %s, '
+                  'rr_keyword: %r, type_keyword: %r, value_keyword: %r',
+                  domain_name, page_number, page_size, rr_keyword, type_keyword, value_keyword)
+        http_method = 'GET'
         params = {
-            'Action': "DescribeDomainRecords",
+            'Action': 'DescribeDomainRecords',
             'DomainName': domain_name
         }
 
@@ -129,7 +134,7 @@ class YunResolver(object):
 
         params.update(optional_params)
         # add signature
-        params.update({"Signature": self.get_signature(http_method, params)})
+        params.update({'Signature': self.get_signature(http_method, params)})
 
         # do real http action
         try:
@@ -138,16 +143,14 @@ class YunResolver(object):
             raise ex
 
         if ret.status_code != requests.codes.ok:
-            print("Server side problem: {0}".format(ret.status_code))
-            if self.debug:
-                print("Error in describeDomainRecords(), "
-                      "params: {0},\nhttp response: {1}"
-                      .format(params, ret.content))
+            LOG.warning('Server side problem: %s', ret.status_code)
+            LOG.warning('Error in describeDomainRecords(), params: %s, http response: %s', params, ret.text)
             return None
 
         domain_record_list = []
         try:
             json_result = ret.json()
+            LOG.debug(json_result)
             total_records = json_result.get('TotalCount', 0)
             if total_records == 0:
                 return None
@@ -160,7 +163,7 @@ class YunResolver(object):
 
         return domain_record_list
 
-    def update_domain_record(self, record_id, rr="www", record_type="A", record_value="192.168.0.1",
+    def update_domain_record(self, record_id, rr='www', record_type='A', record_value='192.168.0.1',
                              ttl=None, priority=None, line=None):
         """
         Update remote domain record on Aliyun server
@@ -175,9 +178,11 @@ class YunResolver(object):
 
         :return: True if succeed, of False if failed
         """
-        http_method = "GET"
+        LOG.debug('update_domain_record: %s, rr: %s, record_type: %s, record_value: %s, ttl: %s, priority: %s, line: %s',
+                  record_id, rr, record_type, record_value, ttl, priority, line)
+        http_method = 'GET'
         params = {
-            'Action': "UpdateDomainRecord",
+            'Action': 'UpdateDomainRecord',
             'RecordId': record_id,
             'RR': rr,
             'Type': record_type,
@@ -188,14 +193,14 @@ class YunResolver(object):
         if ttl:
             valid_ttl_list = [1, 5, 10, 60, 120, 600, 1800, 3600, 43200, 86400]
             if ttl not in valid_ttl_list:
-                print("Invalid TTL, it need to be one of them: %s" % valid_ttl_list)
+                LOG.debug('Invalid TTL, it need to be one of them: %s', valid_ttl_list)
                 return False
             optional_params['TTL'] = ttl
 
         if priority:
             valid_priorities = range(1, 11)
             if priority not in valid_priorities:
-                print("Invalid priority, it need to be one of them: %s" % valid_priorities)
+                LOG.debug('Invalid priority, it need to be one of them: %s', valid_priorities)
             optional_params['Priority'] = priority
 
         if line:
@@ -203,13 +208,13 @@ class YunResolver(object):
                            'mobile', 'oversea', 'edu',
                            'google', 'baidu', 'biying']
             if line not in valid_lines:
-                print("Invalid line, it need to be one of them: %s" % valid_lines)
+                LOG.debug('Invalid line, it need to be one of them: %s', valid_lines)
                 return False
             optional_params['Line'] = line
 
         params.update(optional_params)
         # add signature
-        params.update({"Signature": self.get_signature(http_method, params)})
+        params.update({'Signature': self.get_signature(http_method, params)})
 
         # do real http action
         try:
@@ -218,11 +223,14 @@ class YunResolver(object):
             raise ex
 
         if ret.status_code != requests.codes.ok:
-            print("Server side problem: {0}".format(ret.status_code))
-            if self.debug:
-                print("Error in updateDomainRecord(), "
-                      "params: {0},\nhttp response: {1}"
-                      .format(params, ret.content))
+            try:
+                json_result = ret.json()
+            except Exception:
+                json_result = {}
+            LOG.warning('Server side problem: %s', ret.status_code)
+            LOG.warning('Error in updateDomainRecord(), params: %s, http response: %s', params, ret.text)
+            if json_result.get('Message'):
+                LOG.error(json_result['Message'])
             return False
 
         return True
@@ -234,13 +242,13 @@ class YunResolver(object):
         :param record_id:  domain record id
         :return:  dict
         """
-        http_method = "GET"
+        http_method = 'GET'
         params = {
-            'Action': "DescribeDomainRecordInfo",
+            'Action': 'DescribeDomainRecordInfo',
             'RecordId': record_id,
         }
         # add signature
-        params.update({"Signature": self.get_signature(http_method, params)})
+        params.update({'Signature': self.get_signature(http_method, params)})
 
         # do real http action
         try:
@@ -249,11 +257,8 @@ class YunResolver(object):
             raise ex
 
         if ret.status_code != requests.codes.ok:
-            print("Server side problem: {0}".format(ret.status_code))
-            if self.debug:
-                print("Error in describeDomainRecordInfo(), "
-                      "params: {0},\nhttp response: {1}"
-                      .format(params, ret.content))
+            LOG.warning('Server side problem: %s', ret.status_code)
+            LOG.warning('Error in describeDomainRecordInfo(), params: %s, http response: %s', params, ret.text)
             return False
 
         return ret.json()

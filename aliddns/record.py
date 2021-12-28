@@ -23,17 +23,21 @@ import sys
 
 if sys.version_info < (3,):
     import string
+
     def lower_func(s):
         return string.lower(s)
 else:
     def lower_func(s):
         return str.lower(s)
 
-from utils import DDNSUtils
-from yunresolver import YunResolver
+import logging
+
+from aliddns.yunresolver import YunResolver
+
+LOG = logging.getLogger(__name__)
 
 
-class LocalDomainRecord(object):# pylint: disable=too-few-public-methods
+class LocalDomainRecord(object):  # pylint: disable=too-few-public-methods
     """
     Local domain record created from config file
     """
@@ -42,27 +46,29 @@ class LocalDomainRecord(object):# pylint: disable=too-few-public-methods
     def __init__(self, config, section):
         # set the local record alias to be section
         self.alias = section
-        self.domainname = config.get_option_value(section, "domain")
-        self.rr = self.subdomain = config.get_option_value(section, "sub_domain")
-        self.type = config.get_option_value(section, "type", default="A")
-        self.interface = config.get_option_value(section, "interface", default="eno1")
+        self.domainname = config.get_option_value(section, 'domain')
+        self.rr = self.subdomain = config.get_option_value(section, 'sub_domain')
+        self.type = config.get_option_value(section, 'type', default='A')
+        self.interface = config.get_option_value(section, 'interface', default='')
 
         if not self.domainname:
-            raise ValueError("Failed initializing LocalDomainRecord: " \
-                             "Invalid domain in config file.")
+            raise ValueError('Failed initializing LocalDomainRecord: '
+                             'Invalid domain in config file.')
 
         if not self.rr:
-            raise ValueError("Failed initializing LocalDomainRecord: " \
-                             "Invalid sub_domain in config file.")
+            raise ValueError('Failed initializing LocalDomainRecord: '
+                             'Invalid sub_domain in config file.')
 
         if self.type.upper() not in self.VALID_TYPES:
-            raise ValueError("Failed initializing LocalDomainRecord: " \
-                            "Invalid type in config file.")
+            raise ValueError('Failed initializing LocalDomainRecord: '
+                             'Invalid type in config file.')
 
-class RemoteDomainRecord(object):# pylint: disable=too-many-instance-attributes, too-few-public-methods
+
+class RemoteDomainRecord(object):  # pylint: disable=too-many-instance-attributes, too-few-public-methods
     """
     Remote domain record created from Aliyun server
     """
+
     def __init__(self, domain_record_info):
         self.domainname = None
         self.recordid = None
@@ -87,9 +93,10 @@ class DDNSDomainRecordManager(object):
     """
     Manager class used to manage local domain record and remote domain records
     """
+
     def __init__(self, config):
         self.config = config
-        self.resolver = YunResolver(self.config.access_id, self.config.access_key, self.config.debug)
+        self.resolver = YunResolver(self.config.access_id, self.config.access_key)
         self.local_record_list = self.get_local_record_list()
 
     def get_local_record_list(self):
@@ -124,7 +131,6 @@ class DDNSDomainRecordManager(object):
 
         return None
 
-
     def fetch_remote_record(self, local_record):
         """
         Fetch RemoteDomainReord from Aliyun server by using LocalDomainRecord info
@@ -137,7 +143,7 @@ class DDNSDomainRecordManager(object):
                                                                    rr_keyword=local_record.rr,
                                                                    type_keyword=local_record.type)
         if not fuzzy_matched_list:
-            DDNSUtils.err("Failed to fetch remote DomainRecords.")
+            LOG.error('Failed to fetch remote DomainRecords.')
             return None
 
         exact_matched_list = []
@@ -150,8 +156,7 @@ class DDNSDomainRecordManager(object):
             return None
 
         if len(exact_matched_list) > 1:
-            DDNSUtils.err("Duplicate DomainRecord in Aliyun: {rec.subdomain}.{rec.domainname}"
-                          .format(rec=local_record))
+            LOG.error('Duplicate DomainRecord in Aliyun: %s.%s', local_record.subdomain, local_record.domainname)
             return None
 
         try:
@@ -161,7 +166,7 @@ class DDNSDomainRecordManager(object):
 
         return remote_record
 
-    def update(self, remote_record, current_public_ip,record_type='A'):
+    def update(self, remote_record, current_public_ip, record_type='A'):
         """
         Update RemoteDomainRecord 's value to current public IP on Aliyun server
 

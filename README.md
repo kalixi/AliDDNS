@@ -1,6 +1,8 @@
-# aliyun-ddns-client(v0.3)
+# AliDDNS
 
-Python DDNS client for Aliyun (<http://www.hdget.com/aliyun-ddns-client>)
+Python DDNS client for Aliyun (<https://github.com/kalixi/AliDDNS>)
+
+PS: Fork from <https://github.com/rfancn/aliyun-ddns-client>.
 
 [中文](README.zh.md) | English
 
@@ -17,35 +19,34 @@ Other types are not supported because they need following value format other tha
 
 ## PREREQUISITE
 
-Some 3rd party python libraries are required for aliyun-ddns-client as below, you can install it via pip or easy_install:
+Some 3rd party python libraries are required for AliDDNS as below, you can install it via pip or easy_install:
 
 - requests
-- netifaces (needed only when you want to get IP address from the interface setting, it maybe useful when you have multiple interfaces.)
+- netifaces
 
 For example:
 
 ```sh
-pip install requests
-pip install netifaces # optional 
+pip install requests netifaces
 ```
 
 ## INSTALLATION
 
 ### 1. USE CRONJOB
 
-1. Download all files to somewhere, e,g: /opt/aliyun-ddns-client
+1. Download all files to somewhere, e,g: /opt/aliddns
 2. Rename "ddns.conf.example" to "ddns.conf" in the same dir
 3. Create a cronjob which execute "python ddns.py" periodly, e,g:
 
     ```sh
-    */5 * * * * cd /opt/aliyun-ddns-client && /usr/bin/python ddns.py
+    */5 * * * * cd /opt/aliddns && /usr/bin/python ddns.py
     ```
 
 4. Make sure ddns.conf can be accessed by cronjob user
 
 ### 2. USE SYSTEMD
 
-1. Download all files to some where, e,g:/root/tools/aliyun-ddns-client
+1. Download all files to some where, e,g:/root/tools/aliddns
 2. Rename "ddns.conf.example" to "ddns.conf" in the same dir
 3. Copy two files: "ddns.timer" and "ddns.service" to "/usr/lib/systemd/system"
 4. Execute:
@@ -68,7 +69,6 @@ Required options need to be set in /etc/ddns.conf:
 Optional options:
 
 - type
-- debug
 
 ```ini
 [DEFAULT]
@@ -78,8 +78,6 @@ access_id=
 access_key=
 # it is not used at this moment, you can just ignore it
 interval=600
-# turn on debug mode or not
-debug=true
 
 [DomainRecord1]
 # domain name, like google.com

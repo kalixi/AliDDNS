@@ -18,8 +18,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 """
-from __future__ import print_function
 
+import logging
 import sys
 
 if sys.version_info < (3,):
@@ -27,11 +27,12 @@ if sys.version_info < (3,):
 else:
     import configparser as ConfigParser
 
-from utils import DDNSUtils
 
-CONF_FILE = "ddns.conf"
+LOG = logging.getLogger(__name__)
+
+CONF_FILE = 'ddns.conf'
 # Compaitible consideration for v0.1
-SYS_CONF_FILE = "/etc/ddns.conf"
+SYS_CONF_FILE = '/etc/ddns.conf'
 
 
 class DDNSConfig(object):
@@ -41,7 +42,6 @@ class DDNSConfig(object):
 
     def __init__(self):
         # default options
-        self.debug = False
         self.interval = 600
         self.access_id = None
         self.access_key = None
@@ -50,23 +50,21 @@ class DDNSConfig(object):
         if not self.parser.read(CONF_FILE):
             # Compaitible consideration for v0.1
             if not self.parser.read(SYS_CONF_FILE):
-                DDNSUtils.err_and_exit("Failed to read config file.")
+                LOG.error('Failed to read config file.')
+                exit(1)
 
         try:
-            self.debug = self.parser.getboolean("DEFAULT", "debug")
-            self.access_id = self.parser.get("DEFAULT", "access_id")
-            self.access_key = self.parser.get("DEFAULT", "access_key")
-        except ValueError as ex:
-            DDNSUtils.err_and_exit("Invalid debug in config: {0}".format(ex))
-        except ConfigParser.NoSectionError as ex:
-            DDNSUtils.err_and_exit("Invalid config: {0}".format(ex))
-        except ConfigParser.NoOptionError as ex:
-            DDNSUtils.err_and_exit("Invalid config: {0}".format(ex))
+            self.access_id = self.parser.get('DEFAULT', 'access_id')
+            self.access_key = self.parser.get('DEFAULT', 'access_key')
+        except Exception as ex:
+            LOG.error('Invalid config: %s', ex)
+            exit(1)
 
         if not self.access_id or not self.access_key:
-            DDNSUtils.err_and_exit("Invalid access_id or access_key in config file.")
+            LOG.error('Invalid access_id or access_key in config file.')
+            exit(1)
 
-        if self.parser.has_section("feature_public_ip_from_nic"):
+        if self.parser.has_section('feature_public_ip_from_nic'):
             self.get_feature_public_ip_from_nic_options()
         else:
             self.pifn_enable = False
@@ -79,7 +77,7 @@ class DDNSConfig(object):
         """
         # filter out feature_sections
         sections = self.parser.sections()
-        return [s for s in sections if not s.lower().startswith("feature_")]
+        return [s for s in sections if not s.lower().startswith('feature_')]
 
     def get_option_value(self, section, option, default=None):
         """
@@ -94,9 +92,9 @@ class DDNSConfig(object):
         try:
             value = self.parser.get(section, option)
         except ConfigParser.NoSectionError:
-            print("No section: {0}".format(section))
+            LOG.warning('No section: %s', section)
         except ConfigParser.NoOptionError:
-            print("No option {0} in section: {1}".format(option, section))
+            LOG.warning('No option: %s in section: %s', option, section)
 
         return value
 
@@ -104,20 +102,23 @@ class DDNSConfig(object):
         """
         Get options about the getting ip from nic.
         """
-        section_name = "feature_public_ip_from_nic"
+        section_name = 'feature_public_ip_from_nic'
         try:
-            enable = self.parser.getboolean(section_name, "enable")
+            enable = self.parser.getboolean(section_name, 'enable')
         except ValueError as ex:
-            DDNSUtils.err_and_exit("Invalid 'enable' value in feature public_ip_from_nic config: {0}".format(ex))
+            LOG.error('Invalid "enable" value in feature public_ip_from_nic config: %s', ex)
+            exit(1)
         except ConfigParser.NoOptionError as ex:
             enable = False
 
         self.pifn_enable = enable
         if enable:
             try:
-                self.pifn_interface = self.parser.get(section_name, "interface")
+                self.pifn_interface = self.parser.get(section_name, 'interface')
             except ConfigParser.NoOptionError as ex:
-                DDNSUtils.err_and_exit("No interface specified")
+                LOG.error('Invalid "interface" value in feature public_ip_from_nic config: %s', ex)
+                exit(1)
 
-            if self.pifn_interface == "":
-                DDNSUtils.err_and_exit("Empty interface")
+            if self.pifn_interface == '':
+                LOG.error('Empty "interface" value in feature public_ip_from_nic config')
+                exit(1)
